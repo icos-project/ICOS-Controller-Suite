@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "job-manager.fullname" . }}-configmap
+data:
+  DB_DRIVER: {{ .Values.configMap.dbDriver }}
+  DB_HOST: {{ tpl .Values.configMap.dbHost . }}
+  DB_NAME: {{ tpl .Values.configMap.dbName . }}
+  DB_PASSWORD: {{ tpl .Values.configMap.dbPassword . }}
+  DB_PORT: {{ .Values.configMap.dbPort | quote }}
+  DB_USER: {{ tpl .Values.configMap.dbUser . }}
+  SERVER_PORT: {{ .Values.configMap.serverPort | quote }}
+  LIGHTHOUSE_BASE_URL: {{ tpl .Values.configMap.lighthouseBaseUrl . | quote }}
+  MATCHMAKING_URL: {{ tpl .Values.configMap.matchmakingUrl . | quote }}
+  KEYCLOAK_PUBLIC_KEY: {{ tpl .Values.configMap.keycloakPublicKey . | quote }}
+  POLICYMANAGER_URL: {{ tpl .Values.configMap.policyManagerUrl . | quote }}
+  

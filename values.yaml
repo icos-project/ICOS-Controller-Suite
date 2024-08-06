@@ -1,0 +1,232 @@
+global:
+  external:
+    # -- the public hostname or ip of this controller
+    # @section -- Main
+    host: external-name.com
+  icos:
+    # -- the id of this controller
+    # @section -- Main
+    controllerId: my-controller
+    dpm:
+      baseUrl: "http://{{ .Release.Name }}-dynamic-policy-manager:8000"
+      # -- IAM client id for the Dynamic Policy Manager service
+      # @section -- DPM
+      iamClientId: "replace"
+      # -- IAM client secret for the Dynamic Policy Manager service
+      # @section -- DPM
+      iamClientSecret: "replace"
+    iam:
+      # -- endpoint of the IAM service
+      # @section -- Main
+      baseUrl: https://replace-with-keycloak-url
+      # -- realm of the IAM service
+      # @section -- Main
+      realm: icos-realm
+      # -- public key of the IAM service
+      # @section -- Main
+      publicKey: replace-with-realm-public-key
+
+      #clientId: replace-with-client-id
+      #clientSecret: replace-with-client-secret
+      tokenUrl: "{{ .Values.global.icos.iam.baseUrl }}/realms/{{ .Values.global.icos.iam.realm }}/protocol/openid-connect/token"
+      authUrl: "{{ .Values.global.icos.iam.baseUrl }}/realms/{{ .Values.global.icos.iam.realm }}/protocol/openid-connect/auth"
+      userInfoUrl: "{{ .Values.global.icos.iam.baseUrl }}/realms/{{ .Values.global.icos.iam.realm }}/protocol/openid-connect/userinfo"
+      introspectUrl: "{{ .Values.global.icos.iam.baseUrl }}/realms/{{ .Values.global.icos.iam.realm }}/protocol/openid-connect/token/introspect"
+    lighthouse:
+      # -- endponint of the Lighthouse
+      # @section -- Main
+      baseUrl: http://replace-with-light-house-url
+      apiUrl: "{{ tpl .Values.global.icos.lighthouse.baseUrl . }}/api/v3"
+    aggregator:
+      baseUrl: "http://{{ .Release.Name }}-aggregator:8080"
+    jobManager:
+      baseUrl: "http://{{ .Release.Name }}-job-manager:8082"
+      # the password for the Job Manager backend
+      # @section - Main
+      dbPassword: "replace"
+    matchmaker:
+      baseUrl: http://{{ .Release.Name }}-matchmaker-service:8000
+      # -- IAM client id for the Matchmaker service
+      # @section -- Matchmaker
+      iamClientId: "replace"
+      # -- IAM client secret for the Matchmaker service
+      # @section -- Matchmaker
+      iamClientSecret: "replace"
+    telemetry:
+      rulerUrl: http://{{ .Release.Name }}-thanos-ruler:9099/api/v1/rules
+      queryUrl: "http://{{ .Release.Name }}-thanos-query:9090/"
+      collectorUrl: "{{ .Release.Name }}-telemetry-controller-otel-collector:4317"
+      # -- IAM client id for the Grafana service
+      # @section -- Telemetry
+      iamGrafanaClientId: "replace"
+      # -- IAM client secret for the Grafana service
+      # @section -- Telemetry
+      iamGrafanaClientSecret: "replace"
+    shellBackend:
+      externalPort: 80
+      externalBaseUrl: "{{ tpl .Values.global.external.host . }}:{{ .Values.global.icos.shellBackend.externalPort }}"
+      # -- IAM client id for the Shell Backend service
+      # @section -- Shell
+      iamClientId: "replace"
+      # -- IAM client secret for the Shell Backend service
+      # @section -- Shell
+      iamClientSecret: "replace"
+      # -- IAM username for the Shell Backend service
+      # @section -- Shell
+      iamUser: "user-for-registration-at-lightouse"
+      # -- IAM password for the Shell Backend service
+      # @section -- Shell
+      iamPassword: "password-for-registartion-at-lighthouse"
+    lomos:
+      # the apiKey to access Lomos
+      # @section -- Lomos
+      userApiKey: "api-key"
+
+dynamic-policy-manager:
+  enabled: true
+  extraEnv:
+    PLM_PROMETHEUS_ORIG_API_URL: "{{ tpl .Values.global.icos.telemetry.rulerUrl . }}"
+    PLM_ICOS_JOB_MANAGER_BASE_URL: "{{ tpl .Values.global.icos.jobManager.baseUrl . }}"
+    PLM_AUTHN_SERVER: "{{ tpl .Values.global.icos.iam.baseUrl . }}"
+    PLM_AUTHN_REALM: "{{ tpl .Values.global.icos.iam.realm . }}"
+    PLM_AUTHN_CLIENT_ID: "{{ tpl .Values.global.icos.dpm.iamClientId . }}"
+    PLM_AUTHN_CLIENT_SECRET: "{{ tpl .Values.global.icos.dpm.iamClientSecret . }}"
+
+#
+# Shell Backend
+#
+shell-backend:
+  components:
+    lighthouse:
+      address: "{{ tpl .Values.global.icos.lighthouse.apiUrl . }}"
+      controller:
+        advertise-address: "{{ tpl .Values.global.icos.shellBackend.externalBaseUrl . }}"
+        advertise-name: "{{ tpl .Values.global.icos.controllerId . }}"
+    keycloak: 
+      server: "{{ tpl .Values.global.icos.iam.baseUrl . }}"
+      realm: "{{ tpl .Values.global.icos.iam.realm . }}"
+      client_id: "{{ tpl .Values.global.icos.shellBackend.iamClientId . }}"
+      client_secret: "{{ tpl .Values.global.icos.shellBackend.iamClientSecret . }}"
+      client_user: "{{ tpl .Values.global.icos.shellBackend.iamUser . }}"
+      client_password: "{{ tpl .Values.global.icos.shellBackend.iamPassword . }}"
+    job_manager:
+      server: "{{ tpl .Values.global.icos.jobManager.baseUrl . }}"
+    aggregator:
+      server: "{{ tpl .Values.global.icos.aggregator.baseUrl . }}"
+      path: /
+
+#
+# Aggregator
+#
+aggregator:
+  aggregator:
+    prometheus: "{{ tpl .Values.global.icos.telemetry.queryUrl . }}"
+    keycloakPublicKey: "{{ .Values.global.icos.iam.publicKey }}"
+
+#
+# Job Manager
+#
+job-manager:
+  nameOverride: false
+  fullnameOverride: false
+  configMap:
+    dbDriver: mysql
+    dbName: jobmanager
+    dbPassword: "{{ tpl .Values.global.icos.jobManager.dbPassword . }}"
+    dbHost: "{{ .Release.Name }}-job-manager-backend"
+    lighthouseBaseUrl: "{{ tpl .Values.global.icos.lighthouse.baseUrl . }}"
+    matchmakingUrl: "{{ tpl .Values.global.icos.matchmaker.baseUrl . }}"
+    keycloakPublicKey: "{{ tpl .Values.global.icos.iam.publicKey . }}"
+    policyManagerUrl: "{{ tpl .Values.global.icos.dpm.baseUrl . }}"
+
+job-manager-backend:
+  enabled: true
+  auth:
+    database: jobmanager
+    existingSecret: "{{ .Release.Name }}-job-manager-backend-credentials"
+
+#
+# Telemetry
+#
+telemetruum-hub:
+  enabled: true
+  otel-collector:
+    controllerId: "{{ tpl .Values.global.icos.controllerId . }}"
+  alertmanager:
+    webhookUrl: "{{ tpl .Values.global.icos.dpm.baseUrl . }}/polman/watcher/api/v1/webhooks/alertmanager"
+  grafana:
+    icos:
+      iam:
+        url: "{{ tpl .Values.global.icos.iam.baseUrl . }}"
+        realm: "{{ tpl .Values.global.icos.iam.realm . }}"
+        tokenUrl: "{{ tpl .Values.global.icos.iam.tokenUrl . }}"
+        authUrl: "{{ tpl .Values.global.icos.iam.authUrl . }}"
+        userInfoUrl: "{{ tpl .Values.global.icos.iam.userInfoUrl . }}"
+        clientId: "{{ tpl .Values.global.icos.telemetry.iamGrafanaClientId . }}"
+        clientSecret: "{{ tpl .Values.global.icos.telemetry.iamGrafanaClientSecret . }}"
+
+telemetruum-gateway:
+  enabled: true
+  telemetruumHubEndpoint: "{{ .Release.Name }}-telemetruum-hub-otel-collector:4317"
+  agentId: "self"
+
+telemetruum-leaf:
+  enabled: true
+  telemetryGatewayEndpoint:  "{{ .Release.Name }}-telemetruum-gateway-otel-collector:4317"
+  enableKubeletstatsReceiver: false
+  otel-node-agent:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  icos-nfd:
+    enabled: false
+  scaphandre:
+    enabled: false
+  logs:
+    enabled: false
+  otel-cluster-collector:
+    enabled: true
+  telemetruum-leaf-exporter:
+    enabled: false
+
+#
+# Security Coordinator
+#
+security-coordination-module:
+  enabled: true
+
+security-lomos-api2:
+  enabled: true
+  env:
+  - name: "FLASK_LOMOS_OPENSEARCH_API_URL"
+    value: "http://{{ .Release.Name }}-opensearch:9200"
+  - name: "FLASK_LOMOS_INDEX_NAME"
+    value: "ss4o_logs-{{ .Values.global.controllerId }}-namespace"
+  - name: "FLASK_LOMOS_OPENSEARCH_API_USERNAME"
+    value: ""
+  - name: "FLASK_LOMOS_OPENSEARCH_API_PASSWORD"
+    value: ""
+  - name: "FLASK_LOMOS_API_USER_API_KEY"
+    value: "{{ tpl .Values.global.icos.lomos.userApiKey . }}"
+
+#
+# Intelligence Coordinator
+#
+intelligence-coordination:
+  enabled: true
+
+matchmaker:
+  enabled: true
+  matchmaker:
+    urlIntrospect: "{{ tpl .Values.global.icos.iam.introspectUrl . }}"
+    urlToken: "{{ tpl .Values.global.icos.iam.tokenUrl . }}"
+    urlAggregator: "{{ tpl .Values.global.icos.aggregator.baseUrl . }}"
+    clientID: "{{ tpl .Values.global.icos.matchmaker.iamClientId . }}"
+    clientSecret: "{{ tpl .Values.global.icos.matchmaker.iamClientSecret . }}"
+#
+# Data Management Services
+#
+dataclay:
+  enabled: false

@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shell-backend.fullname" . }}
+  labels:
+    {{- include "shell-backend.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "shell-backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "shell-backend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets | default .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "shell-backend.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: backend-config
+          configMap:
+            name: icos-shell-backend-cfgmap
+      containers:
+        - name: "{{ .Chart.Name }}-lh-regist"
+          image: "{{ (index .Values "lh-regist").image.repository }}:{{ (index .Values "lh-regist").image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ (index .Values "lh-regist").image.pullPolicy }}
+          env:
+          - name: LIGHTHOUSE
+            value: "{{ tpl .Values.components.lighthouse.address . }}"
+          - name: ADV_ADDRESS
+            value: "{{ tpl (index .Values.components.lighthouse.controller "advertise-address") . }}"
+          - name: ADV_NAME
+            value: "{{ tpl (index .Values.components.lighthouse.controller "advertise-name") . }}"
+          - name: KEYCLOAK
+            value: "{{ tpl .Values.components.keycloak.server . }}"
+          - name: CLIENTID
+            value: "{{ tpl .Values.components.keycloak.client_id . }}"
+          - name: SECRET
+            value: "{{ tpl .Values.components.keycloak.client_secret . }}"
+          - name: REALM
+            value: "{{ tpl .Values.components.keycloak.realm . }}"
+          - name: PASSWORD
+            value: "{{ tpl .Values.components.keycloak.client_password . }}"
+          - name: USER
+            value: "{{ tpl .Values.components.keycloak.client_user . }}"
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+          - mountPath: /app/config.yml
+            name: backend-config
+            subPath: backend-config
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/v3/healthcheck
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /api/v3/healthcheck
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

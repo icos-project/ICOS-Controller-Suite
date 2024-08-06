@@ -1,0 +1,42 @@
+dependencies:
+- name: telemetruum-hub
+  repository: oci://harbor.res.eng.it/icos/helm
+  version: 0.4.0
+- name: telemetruum-gateway
+  repository: oci://harbor.res.eng.it/icos/helm
+  version: 0.1.0
+- name: telemetruum-leaf
+  repository: oci://harbor.res.eng.it/icos/helm
+  version: 0.9.0
+- name: dynamic-policy-manager
+  repository: oci://harbor.res.eng.it/icos/helm
+  version: 0.2.0
+- name: job-manager
+  repository: ""
+  version: 0.1.0
+- name: mysql
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 9.14.3
+- name: shell-backend
+  repository: ""
+  version: 0.1.0
+- name: intelligence-coordination
+  repository: ""
+  version: 0.1.0
+- name: aggregator
+  repository: oci://harbor.res.eng.it/icos/helm
+  version: 1.2.5
+- name: security-coordination-module
+  repository: ""
+  version: 0.1.0
+- name: security-lomos-api2
+  repository: ""
+  version: 0.1.0
+- name: matchmaker
+  repository: oci://harbor.res.eng.it/icos/helm
+  version: 0.1.0
+- name: dataclay
+  repository: oci://harbor.res.eng.it/icos/helm
+  version: 0.1.5
+digest: sha256:6e2e649350467ca09eafcadf2889634d72bb32dd57c37e12d845a6a41bab7b98
+generated: "2024-08-05T22:39:31.636245824+02:00"

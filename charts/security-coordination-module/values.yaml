@@ -1,0 +1,24 @@
+replicaCount: 1
+
+image:
+  repository: harbor.res.eng.it/icos/security/coordination-module
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+
+service:
+  type: ClusterIP
+  port: 8080
+  annotations:
+    telemetry.icos.eu/interval: 60s
+    telemetry.icos.eu/path: /wazuh-prometheus/metrics
+    telemetry.icos.eu/port: "8080"
+    telemetry.icos.eu/scrape: "true"
+    telemetry.icos.eu/timeout: 10s
+
+
+ingress:
+  enabled: false
+
+autoscaling: {}

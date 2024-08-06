@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: icos-shell-backend-cfgmap
+data:
+  backend-config: |
+    lighthouse:
+      controller_timeout: {{ .Values.components.lighthouse.controller.timeout }}
+
+    keycloak: 
+      server: {{ tpl .Values.components.keycloak.server . }}
+      client_id: {{ tpl .Values.components.keycloak.client_id . }}
+      client_secret: {{ tpl .Values.components.keycloak.client_secret . }}
+      realm: {{ tpl .Values.components.keycloak.realm . }}
+
+    components: 
+      job_manager: 
+        server: {{ tpl .Values.components.job_manager.server . }}
+        path_jobs: {{ tpl .Values.components.job_manager.path_jobs . }}
+        path_jobgroups: {{ tpl .Values.components.job_manager.path_jobgroups . }}
+        path_policies: {{ tpl .Values.components.job_manager.path_policies . }}
+      aggregator: 
+        server: {{ tpl .Values.components.aggregator.server . }}
+        path: {{ tpl .Values.components.aggregator.path . }}
+

@@ -1,0 +1,69 @@
+apiVersion: v2
+name: icos-controller
+description: A Helm chart for the ICOS Controller
+type: application
+version: 2.0.0
+appVersion: "2.0.0"
+
+dependencies:
+
+- name: telemetruum-hub
+  version: 0.4.0
+  repository: oci://harbor.res.eng.it/icos/helm
+  condition: telemetruum-hub.enabled
+
+- name: telemetruum-gateway
+  version: 0.1.0
+  repository: oci://harbor.res.eng.it/icos/helm
+  condition: telemetruum-gateway.enabled
+
+- name: telemetruum-leaf
+  version: 0.9.0
+  repository: oci://harbor.res.eng.it/icos/helm
+  condition: telemetruum-leaf.enabled
+
+- name: dynamic-policy-manager
+  version: 0.2.0
+  repository: oci://harbor.res.eng.it/icos/helm
+  condition: dynamic-policy-manager.enabled
+
+- name: job-manager
+  version: 0.1.0
+  condition: job-manager.enabled
+
+- name: mysql
+  alias: job-manager-backend
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 9.14.3
+  condition: job-manager-backend.enabled
+
+- name: shell-backend
+  version: 0.1.0
+  condition: shell-backend.enabled
+
+- name: intelligence-coordination
+  version: 0.1.0
+  condition: intelligence-coordination.enabled
+
+- name: aggregator
+  version: 1.2.5
+  repository: oci://harbor.res.eng.it/icos/helm
+  condition: aggregator.enabled
+
+- name: security-coordination-module
+  version: 0.1.0
+  condition: security-coordination-module.enabled
+
+- name: security-lomos-api2
+  version: 0.1.0
+  condition: security-lomos-api2.enabled
+
+- name: matchmaker
+  version: 0.1.0
+  repository: oci://harbor.res.eng.it/icos/helm
+  condition: matchmaker.enabled
+
+- name: dataclay
+  version: 0.1.5
+  repository: oci://harbor.res.eng.it/icos/helm
+  condition: dataclay.enabled

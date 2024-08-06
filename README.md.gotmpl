@@ -1,0 +1,48 @@
+# ICOS Controller
+
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+The ICOS Controller is responsible for managing the continuum (keeping track of the topology and availability of the current system) and the run-time (launching and monitoring the execution of services on-demand). Each ICOS Controller manages a set of Agents based on a proximity criteria; hence, ICOS Controllers are deployed on resource-rich computing facilities along the continuum to cover the whole geographical area.
+
+This repository contains all the necessary information to install and deploy the ICOS Controller in a Kubernetes cluster.
+
+
+{{ template "chart.homepageLine" . }}
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+The minimum hardware requirements are a compatible host with Kubernetes installed, 2 GB of RAM and 2 CPU cores per machine as well as 40GB of storage. The installation furthermore requires full IP network connectivity between all machines that are part of the cluster (public or private network). For details on how to reach the required state of an installed Kubernetes distribution, the user can refer to the [Kubernetes documentation](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/).
+
+## Install Chart
+This creates the release and instantiates all the Kubernetes components associated with the ICOS Controller.
+```console
+helm install [RELEASE_NAME] icos-controller
+```
+
+_See [values](#Values) below._
+
+_See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
+
+
+{{ template "chart.valuesSection" . }}
+
+## Uninstall Chart
+This removes all the Kubernetes components associated with the ICOS Controller and deletes the release.
+```console
+helm uninstall [RELEASE_NAME]
+```
+_See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command documentation._
+
+# Legal
+The ICOS controller is released under the Apache 2.0 license.
+Copyright © 2022-2024 ICOS. All rights reserved.
+
+🇪🇺 This work has received funding from the European Union's HORIZON research and innovation programme under grant agreement No. 101070177.
