@@ -18,7 +18,38 @@
 # and innovation programme under grant agreement No. 101070177.
 #
 
-include:
-  - project: 'resengit/gitlab/pipeline-helpers'
-    ref: 'main'
-    file: '/pipelines/helm-chart.yaml'
+global:
+  controller:
+    id: minimal-controller
+    url: 10.10.10.10
+
+# Disable all services
+# please consider that this file might be outdated. In case new
+# services have been added in the chart, they should be removed
+# as well
+aggregator:
+  enabled: false
+dynamic-policy-manager:
+  enabled: false
+icos-ingress-controller:
+  enabled: false
+icos-metrics-export:
+  enabled: false
+intelligence-coordination:
+  enabled: false
+job-manager:
+  enabled: false
+matchmaker:
+  enabled: false
+security-coordination-module:
+  enabled: false
+security-lomos-api2:
+  enabled: false
+shell-backend:
+  enabled: false
+telemetruum-gateway:
+  enabled: false
+telemetruum-hub:
+  enabled: false
+telemetruum-leaf:
+  enabled: false

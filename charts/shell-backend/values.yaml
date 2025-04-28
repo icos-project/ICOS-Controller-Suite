@@ -25,10 +25,31 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+gui:
+  enabled: false
+  image:
+    repository: harbor.res.eng.it/icos/icos/shell-gui
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  podAnnotations: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+  replicaCount: 1
+  config:
+    lighthouseUrl: ""
+    controllerUrl: ""
+
 lh-regist:
   image:
     repository: harbor.res.eng.it/icos/continuum-management/lighthouse-registration-service
-    tag: 0.4.0-beta
+    tag: 0.5.0
 
 components:
   lighthouse:
@@ -56,6 +77,12 @@ components:
   aggregator:
     server: http://aggregator:8080
     path: /
+  intelligence:
+    server: http://icos-metrics-export:9600
+    train_metrics: /train_model_metric
+    predict_metrics: /create_model_metric
+    get_metrics: /show_models
+    delete_metrics: /unregister_metric
 
 podAnnotations: {}
 
@@ -115,3 +142,7 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+extraCertsBundle:
+  configmapName: ""
+  configmapKey: ""

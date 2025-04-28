@@ -1,42 +1,45 @@
 dependencies:
 - name: telemetruum-hub
   repository: oci://harbor.res.eng.it/icos/helm
-  version: 0.4.0
+  version: 0.6.4
 - name: telemetruum-gateway
   repository: oci://harbor.res.eng.it/icos/helm
-  version: 0.1.0
+  version: 0.3.1
 - name: telemetruum-leaf
   repository: oci://harbor.res.eng.it/icos/helm
-  version: 0.9.0
+  version: 0.17.1
+- name: icos-metrics-export
+  repository: oci://harbor.res.eng.it/icos/helm
+  version: 3.2.6
 - name: dynamic-policy-manager
   repository: oci://harbor.res.eng.it/icos/helm
-  version: 0.2.0
+  version: 0.3.2
 - name: job-manager
   repository: ""
-  version: 0.1.0
-- name: mysql
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 9.14.3
+  version: 0.4.0
 - name: shell-backend
   repository: ""
-  version: 0.1.0
+  version: 0.2.1
 - name: intelligence-coordination
   repository: ""
-  version: 0.1.0
+  version: 0.2.0
 - name: aggregator
   repository: oci://harbor.res.eng.it/icos/helm
-  version: 1.2.5
+  version: 1.6.1
 - name: security-coordination-module
   repository: ""
-  version: 0.1.0
+  version: 0.2.0
 - name: security-lomos-api2
   repository: ""
   version: 0.1.0
 - name: matchmaker
   repository: oci://harbor.res.eng.it/icos/helm
-  version: 0.1.0
+  version: 0.4.0
 - name: dataclay
   repository: oci://harbor.res.eng.it/icos/helm
   version: 0.1.5
-digest: sha256:6e2e649350467ca09eafcadf2889634d72bb32dd57c37e12d845a6a41bab7b98
-generated: "2024-08-05T22:39:31.636245824+02:00"
+- name: icos-ingress-controller
+  repository: oci://harbor.res.eng.it/icos/helm
+  version: 0.1.1
+digest: sha256:676225beb9574fc02079e9ed82b0bd155c8c634ea3a8572e762eaea7a7fb4003
+generated: "2025-04-28T17:09:49.425694428+02:00"

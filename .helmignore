@@ -21,3 +21,7 @@
 .idea/
 *.tmproj
 .vscode/
+
+.mise.toml
+.README.md.gotmpl
+examples

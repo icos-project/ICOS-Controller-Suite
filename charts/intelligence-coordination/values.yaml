@@ -25,7 +25,7 @@ image:
   repository: harbor.res.eng.it/icos-private/ia/coordination
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: v2.0.0
+  tag: v2.0.5
 
 imagePullSecrets: []
 nameOverride: "icos-ai"
@@ -72,7 +72,17 @@ ingress:
           pathType: ImplementationSpecific
   tls: []
 
-resources: {}
+env:
+  - name: "BENTOML_CONFIG_OPTIONS"
+    value: 'api_server.traffic.timeout=600 runners.resources.cpu=0.5 runners.resources."nvidia.com/gpu"=0'
+
+resources: 
+  requests:
+    cpu: 7.5
+    memory: "14Gi"
+  limits:
+    cpu: 7.5
+    memory: "14Gi"
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following

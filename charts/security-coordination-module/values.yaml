@@ -9,11 +9,11 @@ serviceAccount:
 
 service:
   type: ClusterIP
-  port: 8080
+  port: 8000
   annotations:
     telemetry.icos.eu/interval: 60s
     telemetry.icos.eu/path: /wazuh-prometheus/metrics
-    telemetry.icos.eu/port: "8080"
+    telemetry.icos.eu/port: "8000"
     telemetry.icos.eu/scrape: "true"
     telemetry.icos.eu/timeout: 10s
 
@@ -22,3 +22,24 @@ ingress:
   enabled: false
 
 autoscaling: {}
+
+wazuh:
+  host: "10.160.3.69"
+  port: "55000"
+  username: wazuh-wui
+  password: MyS3cr37P450r.*-
+
+keycloak:
+  url: http://keycloak/
+  realm_name: relam
+  resource_server_id: default
+  audience: audience
+  client_id: client_id
+  client_secret_key: client_secret
+
+prometheus_metrics_disabled: True
+security_disabled: False
+
+extraCertsBundle:
+  configmapName: ""
+  configmapKey: ""

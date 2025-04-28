@@ -1,0 +1,55 @@
+{{- if .Values.gui.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shell-backend.fullname" . }}-gui
+  labels:
+    {{- include "shell-backend-gui.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.gui.autoscaling.enabled }}
+  replicas: {{ .Values.gui.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "shell-backend-gui.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.gui.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "shell-backend-gui.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets | default .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if (tpl .Values.extraCertsBundle.configmapName .) }}
+      volumes:
+        - configMap:
+            name: {{ tpl .Values.extraCertsBundle.configmapName . }}
+          name: extra-certs-bundle
+      {{- end }}
+      containers:
+        - name: "{{ .Chart.Name }}-gui"
+          image: "{{ .Values.gui.image.repository }}:{{ .Values.gui.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.gui.image.pullPolicy }}
+          env:
+# NEXT_PUBLIC_LIGHTHOUSE_ADDRESS=https://lighthouse.core.icos-staging.10-160-3-151.sslip.io
+          - name: NEXT_PUBLIC_LIGHTHOUSE_ADDRESS
+            value: "{{ tpl .Values.gui.config.lighthouseUrl . }}"
+          - name: NEXT_PUBLIC_CONTROLLER_ADDRESS
+            value: "{{ tpl .Values.gui.config.controllerUrl . }}"
+          {{- if (tpl .Values.extraCertsBundle.configmapName .) }}
+          volumeMounts:
+          - mountPath: /etc/ssl/certs/icos-extra-cets.crt
+            name: extra-certs-bundle
+            subPath: {{ tpl .Values.extraCertsBundle.configmapKey . }}
+          {{- end }}
+#TODO: storage volume to save yaml files?
+          ports:
+            - name: http
+              containerPort: {{ .Values.gui.service.port }}
+              protocol: TCP
+{{- end }}

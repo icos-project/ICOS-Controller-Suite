@@ -33,13 +33,5 @@ spec:
       targetPort: 5000
       protocol: TCP
       name: mlflow
-    - port: 8000
-      targetPort: 8000
-      protocol: TCP
-      name: jupyterhub
-    - port: 8888
-      targetPort: 8888
-      protocol: TCP
-      name: jupyterlab
   selector:
     {{- include "intelligence-coordination.selectorLabels" . | nindent 4 }}

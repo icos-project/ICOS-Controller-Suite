@@ -22,4 +22,10 @@ data:
       aggregator: 
         server: {{ tpl .Values.components.aggregator.server . }}
         path: {{ tpl .Values.components.aggregator.path . }}
+      intelligence:
+        server: {{ tpl .Values.components.intelligence.server . }}
+        train_metrics: {{ tpl .Values.components.intelligence.train_metrics . }}
+        predict_metrics: {{ tpl .Values.components.intelligence.predict_metrics . }}
+        get_metrics: {{ tpl .Values.components.intelligence.get_metrics . }}
+        delete_metrics: {{ tpl .Values.components.intelligence.delete_metrics . }}
 

@@ -17,13 +17,13 @@ This repository contains all the necessary information to install and deploy the
 |  | security-coordination-module | 0.1.0 |
 |  | security-lomos-api2 | 0.1.0 |
 |  | shell-backend | 0.1.0 |
-| oci://harbor.res.eng.it/icos/helm | aggregator | 1.2.5 |
-| oci://harbor.res.eng.it/icos/helm | dataclay | 0.1.5 |
-| oci://harbor.res.eng.it/icos/helm | dynamic-policy-manager | 0.2.0 |
-| oci://harbor.res.eng.it/icos/helm | matchmaker | 0.1.0 |
-| oci://harbor.res.eng.it/icos/helm | telemetruum-gateway | 0.1.0 |
-| oci://harbor.res.eng.it/icos/helm | telemetruum-hub | 0.4.0 |
-| oci://harbor.res.eng.it/icos/helm | telemetruum-leaf | 0.9.0 |
+| oci://harbor.res.eng.it/icos-private/helm | aggregator | ~0.0.0-0 |
+| oci://harbor.res.eng.it/icos-private/helm | dataclay | ~0.0.0-0 |
+| oci://harbor.res.eng.it/icos-private/helm | dynamic-policy-manager | ~0.1.0-0 |
+| oci://harbor.res.eng.it/icos-private/helm | matchmaker | ~0.0.0-0 |
+| oci://harbor.res.eng.it/icos-private/helm | telemetruum-gateway | ~0.0.0-0 |
+| oci://harbor.res.eng.it/icos-private/helm | telemetruum-hub | ~0.0.0-0 |
+| oci://harbor.res.eng.it/icos-private/helm | telemetruum-leaf | ~0.0.0-0 |
 | oci://registry-1.docker.io/bitnamicharts | job-manager-backend(mysql) | 9.14.3 |
 
 The minimum hardware requirements are a compatible host with Kubernetes installed, 2 GB of RAM and 2 CPU cores per machine as well as 40GB of storage. The installation furthermore requires full IP network connectivity between all machines that are part of the cluster (public or private network). For details on how to reach the required state of an installed Kubernetes distribution, the user can refer to the [Kubernetes documentation](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/).
@@ -89,7 +89,7 @@ helm uninstall [RELEASE_NAME]
 _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command documentation._
 
 # Legal
-The ICOS controller is released under the Apache 2.0 license.
+The ICOS Suites is released under the Apache 2.0 license.
 Copyright © 2022-2024 ICOS. All rights reserved.
 
 🇪🇺 This work has received funding from the European Union's HORIZON research and innovation programme under grant agreement No. 101070177.

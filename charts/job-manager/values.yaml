@@ -42,28 +42,12 @@ service:
 
 ingress:
   enabled: false
-  className: "traefik"
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: k3s.bull1.ari-imet.eu
-      paths:
-        - path: /jobmanager
-          pathType: Prefix
-  # tls: 
-  # - hosts:
-  #       - k3s.bull1.ari-imet.eu
-  #   secretName: k3s-bull1-secret
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
 
 configMap:
   dbDriver: mysql
-  dbHost: mysql
+  dbHost: "{{ .Release.Name }}-jobmanager-mysql"
   dbName: jobmanager
-  dbPassword: secret
+  #dbPassword: '{{ index (lookup "v1" "Secret" .Release.Namespace (printf "%s-jobmanager-mysql" .Release.Name)).data "mysql-root-password" | b64dec }}'
   dbPort: 3306
   dbUser: root
   serverPort: 8082
@@ -71,6 +55,11 @@ configMap:
   matchmakingUrl: http://matchmaking-url/
   keycloakPublicKey: oauth2-server-public-key
   policyManagerUrl: "http://policy-manager-url"
+  prettyprint: "false"
+  keycloakBaseUrl: http://keycloak-url/
+  keycloakRealm: realm
+  keycloakClientId: client-id
+  keycloakClientSecret: client-secret
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -96,3 +85,15 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+mysql:
+  nameOverride: jobmanager-mysql
+  auth:
+    database: jobmanager
+    password: unused-set-by-the-secret
+    rootPassword: unused-set-by-the-secret
+    existingSecret: "{{ .Release.Name }}-jobmanager-mysql"
+
+extraCertsBundle:
+  configmapName: ""
+  configmapKey: ""

@@ -20,36 +20,22 @@ updating models. This acts as an interface and provides coordination between the
 layers providing and requesting services. This component helps to coordinate with other intelligence
 layers of the same domain in the continuum, providing ICOS with the ability to learn collaboratively.
 
-In this version, the AI coordination API will offer a mechanism for estimating the CPU consumption of the
-ICOS agents. This API endpoint service will save a reference to the saved model in the AI analytics module,
-which is a CPU-usage prediction model in this case. When a request is made to the API, this model will
-forecast CPU usage one minute in the future.
+In this version, the AI coordination API will offer a mechanism for estimating the CPU and memory consumption 
+of the ICOS agents. This API endpoint service will save a reference to the saved model in the AI analytics module,
+which is a CPU-usage or Memory-usage prediction model in this case. When a request is made to the API, this model will
+forecast metric usage one minute in the future. This version will also provides mechanisms for detecting drift
+and explain model predictions to improve AI trustworthiness. Additionally, each prediction will provide a confidence 
+score and confidence interval to indicate how good is the prediction. Finally, to address complex resource management
+scenarios, a new Pytorch model (POC) for multivariate prediction is added to predict combined CPU and memory forecasting
+along with capabilities to perform model compression.
 
 Version 1.3 introduced MLFlow and Jupyter Lab and JupyterHub support, plus notebooks with examples about how to use the API.
 
 Version 2.0 introduces mechanisms for detecting drift and explain model predictions to imporove AI trustworthiness.
 
-## Steps to launch Jupyter services
-
-### 1. JupyterHub
-
-- Run docker command to get inside the ICOS Intelligence Coordination API docker and execute below command:
-``` docker exec -u root -it icos_intelligence_docker /bin/bash ```
-
-- Once inside the docker, create users to access your own jupyterhub account
-```passwd bentoml```
-
-- Now launch jupyterhub as root pointing to the provided config file:
-```jupyterhub -f /path/to/jupyterhub_config.py```
-This file should be within the container in `src/notebooks`
-
-- Finally, access jupyterhub from the your browser and enter the password selected for the bentoml user.
-
-### 2. JupyterLab
-
-- Run the POST request from the ICOS Intelligence UI to start the jupyterlab instance with your desired port and token id
-```jupyter lab --port 8888 --NotebookApp.token=‘icos_1234’```
-- Now access your jupyterlab session from the browser.
+Version 2.0.3 introduces new Pytorch model to train multivariate metrics (CPU and Memory), perform model compression
+and provides learning curves in MLFlow. This version also provides model confidence scores along with predictions. Jupyterlab
+and JupyterHub support is removed from this version and added in the agent suite.
 
 ## Legal
 The ICOS Coordination API is released under the GNU General Public License v3.

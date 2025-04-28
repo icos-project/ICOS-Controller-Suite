@@ -14,6 +14,12 @@
   *  This work has received funding from the European Union's HORIZON research 
   *  and innovation programme under grant agreement No. 101070177.
   *  ----------------------------------------
+  *
+  *
+  * TODO: this check just one service, we should add more tests for the other services
+  *
+  *
+  *
  */ -}}
 
 apiVersion: v1
@@ -29,5 +35,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "intelligence-coordination.fullname" . }}:{{ .Values.service.port }}']
+      args: ['{{ include "intelligence-coordination.fullname" . }}:3000']
   restartPolicy: Never

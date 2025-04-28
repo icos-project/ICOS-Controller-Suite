@@ -29,12 +29,24 @@ spec:
       serviceAccountName: {{ include "job-manager.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if (tpl (.Values.extraCertsBundle.configmapName | default .Values.global.extraCertsBundle.configmapName) .) }}
+      volumes:
+      - configMap:
+          name: {{ tpl (.Values.extraCertsBundle.configmapName | default .Values.global.extraCertsBundle.configmapName) . }}
+        name: extra-certs-bundle
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-jobmanager-mysql
+                key: mysql-root-password
           envFrom:
           - configMapRef:
               name: {{ include "job-manager.fullname" . }}-configmap
@@ -50,6 +62,12 @@ spec:
             httpGet:
               path: /jobmanager/healthz
               port: http
+          {{- if (tpl (.Values.extraCertsBundle.configmapName | default .Values.global.extraCertsBundle.configmapName) .) }}
+          volumeMounts:
+          - mountPath: /etc/ssl/certs/icos-extra-cets.crt
+            name: extra-certs-bundle
+            subPath: {{ tpl (.Values.extraCertsBundle.configmapKey | default .Values.global.extraCertsBundle.configmapKey) . }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

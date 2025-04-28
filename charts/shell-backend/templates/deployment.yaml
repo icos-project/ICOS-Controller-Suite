@@ -31,6 +31,11 @@ spec:
         - name: backend-config
           configMap:
             name: icos-shell-backend-cfgmap
+        {{- if (tpl .Values.extraCertsBundle.configmapName .) }}
+        - configMap:
+            name: {{ tpl .Values.extraCertsBundle.configmapName . }}
+          name: extra-certs-bundle
+        {{- end }}
       containers:
         - name: "{{ .Chart.Name }}-lh-regist"
           image: "{{ (index .Values "lh-regist").image.repository }}:{{ (index .Values "lh-regist").image.tag | default .Chart.AppVersion }}"
@@ -54,6 +59,12 @@ spec:
             value: "{{ tpl .Values.components.keycloak.client_password . }}"
           - name: USER
             value: "{{ tpl .Values.components.keycloak.client_user . }}"
+          {{- if (tpl .Values.extraCertsBundle.configmapName .) }}
+          volumeMounts:
+          - mountPath: /etc/ssl/certs/icos-extra-cets.crt
+            name: extra-certs-bundle
+            subPath: {{ tpl .Values.extraCertsBundle.configmapKey . }}
+          {{- end }}
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -63,6 +74,11 @@ spec:
           - mountPath: /app/config.yml
             name: backend-config
             subPath: backend-config
+          {{- if (tpl .Values.extraCertsBundle.configmapName .) }}
+          - mountPath: /etc/ssl/certs/icos-extra-cets.crt
+            name: extra-certs-bundle
+            subPath: {{ tpl .Values.extraCertsBundle.configmapKey . }}
+          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

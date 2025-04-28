@@ -6,7 +6,6 @@ data:
   DB_DRIVER: {{ .Values.configMap.dbDriver }}
   DB_HOST: {{ tpl .Values.configMap.dbHost . }}
   DB_NAME: {{ tpl .Values.configMap.dbName . }}
-  DB_PASSWORD: {{ tpl .Values.configMap.dbPassword . }}
   DB_PORT: {{ .Values.configMap.dbPort | quote }}
   DB_USER: {{ tpl .Values.configMap.dbUser . }}
   SERVER_PORT: {{ .Values.configMap.serverPort | quote }}
@@ -14,4 +13,9 @@ data:
   MATCHMAKING_URL: {{ tpl .Values.configMap.matchmakingUrl . | quote }}
   KEYCLOAK_PUBLIC_KEY: {{ tpl .Values.configMap.keycloakPublicKey . | quote }}
   POLICYMANAGER_URL: {{ tpl .Values.configMap.policyManagerUrl . | quote }}
-  
+  PRETTYPRINT: {{ tpl .Values.configMap.prettyprint . | quote }}
+  KEYCLOAK_BASE_URL: {{ tpl .Values.configMap.keycloakBaseUrl . | quote }}
+  KEYCLOAK_REALM: {{ tpl .Values.configMap.keycloakRealm . | quote }}
+  KEYCLOAK_CLIENT_ID: {{ tpl .Values.configMap.keycloakClientId . | quote }}
+  KEYCLOAK_CLIENT_SECRET: {{ tpl .Values.configMap.keycloakClientSecret . | quote }}
+

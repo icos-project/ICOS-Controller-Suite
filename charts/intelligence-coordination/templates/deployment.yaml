@@ -68,15 +68,30 @@ spec:
               protocol: TCP
               name: jupyterlab
           livenessProbe:
+            failureThreshold: 3
             httpGet:
               path: /
               port: api
+              scheme: HTTP
+            periodSeconds: 60
+            successThreshold: 1
+            timeoutSeconds: 60
           readinessProbe:
+            failureThreshold: 3
             httpGet:
               path: /
               port: api
+              scheme: HTTP
+            periodSeconds: 60
+            successThreshold: 1
+            timeoutSeconds: 60
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            {{- range $name_value := .Values.env }}
+            - name: {{ $name_value.name }}
+              value: {{ tpl $name_value.value $ }}
+            {{- end }}
           {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}

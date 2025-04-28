@@ -1,58 +1,123 @@
-global:
-  external:
-    # -- the public hostname or ip of this controller
-    # @section -- Main
-    host: external-name.com
-  icos:
-    # -- the id of this controller
-    # @section -- Main
-    controllerId: my-controller
-    dpm:
-      baseUrl: "http://{{ .Release.Name }}-dynamic-policy-manager:8000"
-      # -- IAM client id for the Dynamic Policy Manager service
-      # @section -- DPM
-      iamClientId: "replace"
-      # -- IAM client secret for the Dynamic Policy Manager service
-      # @section -- DPM
-      iamClientSecret: "replace"
-    iam:
-      # -- endpoint of the IAM service
-      # @section -- Main
-      baseUrl: https://replace-with-keycloak-url
-      # -- realm of the IAM service
-      # @section -- Main
-      realm: icos-realm
-      # -- public key of the IAM service
-      # @section -- Main
-      publicKey: replace-with-realm-public-key
+#
+# ICOS Suites
+# Copyright © 2022 - 2025 Engineering Ingegneria Informatica S.p.A.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+# This work has received funding from the European Union's HORIZON research
+# and innovation programme under grant agreement No. 101070177.
+#
 
-      #clientId: replace-with-client-id
-      #clientSecret: replace-with-client-secret
-      tokenUrl: "{{ .Values.global.icos.iam.baseUrl }}/realms/{{ .Values.global.icos.iam.realm }}/protocol/openid-connect/token"
-      authUrl: "{{ .Values.global.icos.iam.baseUrl }}/realms/{{ .Values.global.icos.iam.realm }}/protocol/openid-connect/auth"
-      userInfoUrl: "{{ .Values.global.icos.iam.baseUrl }}/realms/{{ .Values.global.icos.iam.realm }}/protocol/openid-connect/userinfo"
-      introspectUrl: "{{ .Values.global.icos.iam.baseUrl }}/realms/{{ .Values.global.icos.iam.realm }}/protocol/openid-connect/token/introspect"
+global:
+  extraCertsBundle:
+    configmapName: '{{ eq .Values.global.core.ca.bundle "" | ternary "" (printf "%s-icos-certs-bundle" .Release.Name) }}'
+    configmapKey: icos-ca-certs.pem
+
+  core:
+    url: null
+    protocol: '{{ regexReplaceAll "^((https?)://)?([^:/]+)?(:([0-9]+))??(/[^:]*)?$" (tpl .Values.global.core.url .) "${2}" | default "http" }}'
+    host:     '{{ regexReplaceAll "^((https?)://)?([^:/]+)?(:([0-9]+))??(/[^:]*)?$" (tpl .Values.global.core.url .) "${3}" }}'
+    port:     '{{ regexReplaceAll "^((https?)://)?([^:/]+)?(:([0-9]+))??(/[^:]*)?$" (tpl .Values.global.core.url .) "${5}" | default ((eq (tpl .Values.global.core.protocol .) "https") | ternary "443" "80") }}'
+    path:     '{{ regexReplaceAll "^((https?)://)?([^:/]+)?(:([0-9]+))??(/[^:]*)?$" (tpl .Values.global.core.url .) "${6}" | default "/" }}'
+    routing: port
+    ca:
+      config:
+        subdomain: ca
+        path: ca
+        port: 32010
+      externalProtocol: "{{ tpl .Values.global.core.protocol . }}"
+      externalHost: '{{ (eq .Values.global.core.routing "host") | ternary (printf "%s.%s" .Values.global.core.ca.config.subdomain (tpl .Values.global.core.host .))  (tpl .Values.global.core.host .) }}'
+      externalPort: '{{ (eq .Values.global.core.routing "port") | ternary .Values.global.core.ca.config.port  (tpl .Values.global.core.port .) }}'
+      externalPath: '{{ (eq .Values.global.core.routing "path") | ternary (printf "%s%s" (tpl .Values.global.core.path .) .Values.global.core.ca.config.path) (tpl .Values.global.core.path .) }}'
+      externalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.core.ca.externalProtocol .)  (tpl .Values.global.core.ca.externalHost .)  (tpl .Values.global.core.ca.externalPort .)  (tpl .Values.global.core.ca.externalPath .)}}'
+ 
+      bundle: ""
+      issuerKid: ""
+      issuerPassword: ""
+      issuerUser: admin
+    iam:
+      config:
+        subdomain: iam
+        path: iam
+        port: 32020
+      externalProtocol: "{{ tpl .Values.global.core.protocol . }}"
+      externalHost: '{{ (eq .Values.global.core.routing "host") | ternary (printf "%s.%s" .Values.global.core.iam.config.subdomain (tpl .Values.global.core.host .))  (tpl .Values.global.core.host .) }}'
+      externalPort: '{{ (eq .Values.global.core.routing "port") | ternary .Values.global.core.iam.config.port  (tpl .Values.global.core.port .) }}'
+      externalPath: '{{ (eq .Values.global.core.routing "path") | ternary (printf "%s%s" (tpl .Values.global.core.path .) .Values.global.core.iam.config.path) (tpl .Values.global.core.path .) }}'
+      externalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.core.iam.externalProtocol .)  (tpl .Values.global.core.iam.externalHost .)  (tpl .Values.global.core.iam.externalPort .)  (tpl .Values.global.core.iam.externalPath .)}}'
+
+      realm: ""
+      publicKey: ""
+      tokenUrl: "{{ tpl .Values.global.core.iam.externalUrl . }}realms/{{ .Values.global.core.iam.realm }}/protocol/openid-connect/token"
+      authUrl: "{{ tpl .Values.global.core.iam.externalUrl . }}realms/{{ .Values.global.core.iam.realm }}/protocol/openid-connect/auth"
+      userInfoUrl: "{{ tpl .Values.global.core.iam.externalUrl . }}realms/{{ .Values.global.core.iam.realm }}/protocol/openid-connect/userinfo"
+      introspectUrl: "{{ tpl .Values.global.core.iam.externalUrl . }}realms/{{ .Values.global.core.iam.realm }}/protocol/openid-connect/token/introspect"
+
     lighthouse:
-      # -- endponint of the Lighthouse
-      # @section -- Main
-      baseUrl: http://replace-with-light-house-url
-      apiUrl: "{{ tpl .Values.global.icos.lighthouse.baseUrl . }}/api/v3"
-    aggregator:
-      baseUrl: "http://{{ .Release.Name }}-aggregator:8080"
-    jobManager:
-      baseUrl: "http://{{ .Release.Name }}-job-manager:8082"
-      # the password for the Job Manager backend
-      # @section - Main
-      dbPassword: "replace"
-    matchmaker:
-      baseUrl: http://{{ .Release.Name }}-matchmaker-service:8000
-      # -- IAM client id for the Matchmaker service
-      # @section -- Matchmaker
-      iamClientId: "replace"
-      # -- IAM client secret for the Matchmaker service
-      # @section -- Matchmaker
-      iamClientSecret: "replace"
+      config:
+        subdomain: lighthouse
+        path: lighthouse
+        port: 32030
+      externalProtocol: "{{ tpl .Values.global.core.protocol . }}"
+      externalHost: '{{ (eq .Values.global.core.routing "host") | ternary (printf "%s.%s" .Values.global.core.lighthouse.config.subdomain (tpl .Values.global.core.host .))  (tpl .Values.global.core.host .) }}'
+      externalPort: '{{ (eq .Values.global.core.routing "port") | ternary .Values.global.core.lighthouse.config.port  (tpl .Values.global.core.port .) }}'
+      externalPath: '{{ (eq .Values.global.core.routing "path") | ternary (printf "%s%s" (tpl .Values.global.core.path .) .Values.global.core.lighthouse.config.path) (tpl .Values.global.core.path .) }}'
+      externalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.core.lighthouse.externalProtocol .)  (tpl .Values.global.core.lighthouse.externalHost .)  (tpl .Values.global.core.lighthouse.externalPort .)  (tpl .Values.global.core.lighthouse.externalPath .)}}'
+
+      apiUrl: "{{ tpl .Values.global.core.lighthouse.externalUrl . }}api/v3"
+  
+
+  controller:
+    id: null
+    url: null
+    protocol: '{{ regexReplaceAll "^((https?)://)?([^:/]+)?(:([0-9]+))??(/[^:]*)?$" (tpl .Values.global.controller.url .) "${2}" | default "http" }}'
+    host:     '{{ regexReplaceAll "^((https?)://)?([^:/]+)?(:([0-9]+))??(/[^:]*)?$" (tpl .Values.global.controller.url .) "${3}" }}'
+    port:     '{{ regexReplaceAll "^((https?)://)?([^:/]+)?(:([0-9]+))??(/[^:]*)?$" (tpl .Values.global.controller.url .) "${5}" | default ((eq (tpl .Values.global.controller.protocol .) "https") | ternary "443" "80") }}'
+    path:     '{{ regexReplaceAll "^((https?)://)?([^:/]+)?(:([0-9]+))??(/[^:]*)?$" (tpl .Values.global.controller.url .) "${6}" | default "/" }}'
+    routing: port
     telemetry:
+      internalProtocol: "http"
+      internalHost: "{{ .Release.Name }}-telemetruum-hub-otel-collector"
+      internalPort: "4318"
+      internalPath: "/"
+      internalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.telemetry.internalProtocol .)  (tpl .Values.global.controller.telemetry.internalHost .)  (tpl .Values.global.controller.telemetry.internalPort .)  (tpl .Values.global.controller.telemetry.internalPath .)}}'
+
+      config:
+        subdomain: telemetry
+        path: telemetry
+        port: 32103
+        grafanaSubdomain: grafana
+        grafanaPath: grafana
+        grafanaPort: 32100
+
+      externalProtocol: "{{ tpl .Values.global.controller.protocol . }}"
+      externalHost: '{{ (eq .Values.global.controller.routing "host") | ternary (printf "%s.%s" .Values.global.controller.telemetry.config.subdomain (tpl .Values.global.controller.host .))  (tpl .Values.global.controller.host .) }}'
+      externalPort: '{{ (eq .Values.global.controller.routing "port") | ternary .Values.global.controller.telemetry.config.port  (tpl .Values.global.controller.port .) }}'
+      externalPath: '{{ (eq .Values.global.controller.routing "path") | ternary (printf "%s%s" (tpl .Values.global.controller.path .) .Values.global.controller.telemetry.config.path) (tpl .Values.global.controller.path .) }}'
+      externalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.telemetry.externalProtocol .)  (tpl .Values.global.controller.telemetry.externalHost .)  (tpl .Values.global.controller.telemetry.externalPort .)  (tpl .Values.global.controller.telemetry.externalPath .)}}'
+
+      exposeGrafana: false
+      grafanaInternalHost: "{{ .Release.Name }}-grafana"
+      grafanaInternalPort: "3000"
+      grafanaInternalUrl: "http://{{ tpl .Values.global.controller.telemetry.grafanaInternalHost . }}:{{ tpl .Values.global.controller.telemetry.grafanaInternalPort . }}/"
+
+      grafanaExternalProtocol: "{{ tpl .Values.global.controller.protocol . }}"
+      grafanaExternalHost: '{{ (eq .Values.global.controller.routing "host") | ternary (printf "%s.%s" .Values.global.controller.telemetry.config.grafanaSubdomain (tpl .Values.global.controller.host .))  (tpl .Values.global.controller.host .) }}'
+      grafanaExternalPort: '{{ (eq .Values.global.controller.routing "port") | ternary .Values.global.controller.telemetry.config.grafanaPort  (tpl .Values.global.controller.port .) }}'
+      grafanaExternalPath: '{{ (eq .Values.global.controller.routing "path") | ternary (printf "%s%s" (tpl .Values.global.controller.path .) .Values.global.controller.telemetry.config.grafanaPath) (tpl .Values.global.controller.path .) }}'
+      grafanaExternalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.telemetry.grafanaExternalProtocol .)  (tpl .Values.global.controller.telemetry.grafanaExternalHost .)  (tpl .Values.global.controller.telemetry.grafanaExternalPort .)  (tpl .Values.global.controller.telemetry.grafanaExternalPath .)}}'
+
+
       rulerUrl: http://{{ .Release.Name }}-thanos-ruler:9099/api/v1/rules
       queryUrl: "http://{{ .Release.Name }}-thanos-query:9090/"
       collectorUrl: "{{ .Release.Name }}-telemetry-controller-otel-collector:4317"
@@ -62,117 +127,265 @@ global:
       # -- IAM client secret for the Grafana service
       # @section -- Telemetry
       iamGrafanaClientSecret: "replace"
-    shellBackend:
-      externalPort: 80
-      externalBaseUrl: "{{ tpl .Values.global.external.host . }}:{{ .Values.global.icos.shellBackend.externalPort }}"
-      # -- IAM client id for the Shell Backend service
-      # @section -- Shell
+
+    jobManager:
+      internalProtocol: "http"
+      internalHost: "{{ .Release.Name }}-job-manager"
+      internalPort: "8082"
+      internalPath: "/"
+      internalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.jobManager.internalProtocol .)  (tpl .Values.global.controller.jobManager.internalHost .)  (tpl .Values.global.controller.jobManager.internalPort .)  (tpl .Values.global.controller.jobManager.internalPath .)}}'
+      internalUrlNoPath: '{{ printf "%s://%s:%s" (tpl .Values.global.controller.jobManager.internalProtocol .)  (tpl .Values.global.controller.jobManager.internalHost .)  (tpl .Values.global.controller.jobManager.internalPort .)}}'
+
+      config:
+        subdomain: jobmanager
+        path: jobmanager
+        port: 32300
+      externalProtocol: "{{ tpl .Values.global.controller.protocol . }}"
+      externalHost: '{{ (eq .Values.global.controller.routing "host") | ternary (printf "%s.%s" .Values.global.controller.jobManager.config.subdomain (tpl .Values.global.controller.host .))  (tpl .Values.global.controller.host .) }}'
+      externalPort: '{{ (eq .Values.global.controller.routing "port") | ternary .Values.global.controller.jobManager.config.port  (tpl .Values.global.controller.port .) }}'
+      externalPath: '{{ (eq .Values.global.controller.routing "path") | ternary (printf "%s%s" (tpl .Values.global.controller.path .) .Values.global.controller.jobManager.config.path) (tpl .Values.global.controller.path .) }}'
+      externalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.jobManager.externalProtocol .)  (tpl .Values.global.controller.jobManager.externalHost .)  (tpl .Values.global.controller.jobManager.externalPort .)  (tpl .Values.global.controller.jobManager.externalPath .)}}'
+
       iamClientId: "replace"
+      iamClientSecret: "replace"
+
+    dpm:
+      internalProtocol: "http"
+      internalHost: "{{ .Release.Name }}-dynamic-policy-manager-backend"
+      internalPort: "8000"
+      internalPath: "/polman"
+      internalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.dpm.internalProtocol .)  (tpl .Values.global.controller.dpm.internalHost .)  (tpl .Values.global.controller.dpm.internalPort .)  (tpl .Values.global.controller.dpm.internalPath .)}}'
+
+      #baseUrl: "http://{{ .Release.Name }}-dynamic-policy-manager:8000"
+      # -- IAM client id for the Dynamic Policy Manager service
+      # @section -- DPM
+      iamClientId: "replace"
+      # -- IAM client secret for the Dynamic Policy Manager service
+      # @section -- DPM
+      iamClientSecret: "replace"
+
+      # this must be public, so we do not need a password
+      iamGuiClientId: "replace"
+
+    aggregator:
+      internalProtocol: "http"
+      internalHost: "{{ .Release.Name }}-aggregator"
+      internalPort: "8080"
+      internalPath: "/"
+      internalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.aggregator.internalProtocol .)  (tpl .Values.global.controller.aggregator.internalHost .)  (tpl .Values.global.controller.aggregator.internalPort .)  (tpl .Values.global.controller.aggregator.internalPath .)}}'
+      internalUrlNoPath: '{{ printf "%s://%s:%s" (tpl .Values.global.controller.aggregator.internalProtocol .)  (tpl .Values.global.controller.aggregator.internalHost .)  (tpl .Values.global.controller.aggregator.internalPort .)}}'
+      #baseUrl: "http://{{ .Release.Name }}-aggregator:8080"
+
+    matchmaker:
+      internalProtocol: "http"
+      internalHost: "{{ .Release.Name }}-matchmaker-service"
+      internalPort: "8000"
+      internalPath: "/matchmake"
+      internalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.matchmaker.internalProtocol .)  (tpl .Values.global.controller.matchmaker.internalHost .)  (tpl .Values.global.controller.matchmaker.internalPort .)  (tpl .Values.global.controller.matchmaker.internalPath .)}}'
+
+      #baseUrl: http://{{ .Release.Name }}-matchmaker-service:8000
+      # -- IAM client id for the Matchmaker service
+      # @section -- Matchmaker
+      iamClientId: "replace"
+      # -- IAM client secret for the Matchmaker service
+      # @section -- Matchmaker
+      iamClientSecret: "replace"
+    
+    metricsExporter:
+      iamClientId: "replace"
+      iamClientSecret: "replace"
+
+    shellBackend:
+      internalProtocol: "http"
+      internalHost: "{{ .Release.Name }}-shell-backend"
+      internalPort: "8080"
+      internalPath: "/"
+      internalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.shellBackend.internalProtocol .)  (tpl .Values.global.controller.shellBackend.internalHost .)  (tpl .Values.global.controller.shellBackend.internalPort .)  (tpl .Values.global.controller.shellBackend.internalPath .)}}'
+      config:
+        subdomain: shell
+        path: shell
+        port: 32500
+      externalProtocol: "{{ tpl .Values.global.controller.protocol . }}"
+      externalHost: '{{ (eq .Values.global.controller.routing "host") | ternary (printf "%s.%s" .Values.global.controller.shellBackend.config.subdomain (tpl .Values.global.controller.host .))  (tpl .Values.global.controller.host .) }}'
+      externalPort: '{{ (eq .Values.global.controller.routing "port") | ternary .Values.global.controller.shellBackend.config.port  (tpl .Values.global.controller.port .) }}'
+      externalPath: '{{ (eq .Values.global.controller.routing "path") | ternary (printf "%s%s" (tpl .Values.global.controller.path .) .Values.global.controller.shellBackend.config.path) (tpl .Values.global.controller.path .) }}'
+      externalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.shellBackend.externalProtocol .)  (tpl .Values.global.controller.shellBackend.externalHost .)  (tpl .Values.global.controller.shellBackend.externalPort .)  (tpl .Values.global.controller.shellBackend.externalPath .)}}'
+      #baseUrl: "http://{{ .Values.global.icos.jobManager.serviceName }}:{{ .Values.global.icos.jobManager.servicePort }}"
+      #dnsName: shell.{{ tpl .Values.global.external.host . }}
+      #externalPort: 80
+      #externalBaseUrl: "{{ tpl .Values.global.external.host . }}:{{ .Values.global.icos.shellBackend.externalPort }}"
+      # -- IAM client id for the Shell Backend service (it must be the same of the Lightouse)
+      # @section -- Shell
+      iamClientId: lighthouse
       # -- IAM client secret for the Shell Backend service
       # @section -- Shell
       iamClientSecret: "replace"
       # -- IAM username for the Shell Backend service
       # @section -- Shell
-      iamUser: "user-for-registration-at-lightouse"
+      iamUser: shell-backend-user
       # -- IAM password for the Shell Backend service
       # @section -- Shell
       iamPassword: "password-for-registartion-at-lighthouse"
+
+    shellGui:
+      internalProtocol: "http"
+      internalHost: "{{ .Release.Name }}-shell-backend-gui"
+      internalPort: "3000"
+      internalPath: "/"
+      internalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.shellGui.internalProtocol .)  (tpl .Values.global.controller.shellGui.internalHost .)  (tpl .Values.global.controller.shellGui.internalPort .)  (tpl .Values.global.controller.shellGui.internalPath .)}}'
+      config:
+        subdomain: gui
+        path: gui
+        port: 32600
+      externalProtocol: "{{ tpl .Values.global.controller.protocol . }}"
+      externalHost: '{{ (eq .Values.global.controller.routing "host") | ternary (printf "%s.%s" .Values.global.controller.shellGui.config.subdomain (tpl .Values.global.controller.host .))  (tpl .Values.global.controller.host .) }}'
+      externalPort: '{{ (eq .Values.global.controller.routing "port") | ternary .Values.global.controller.shellGui.config.port  (tpl .Values.global.controller.port .) }}'
+      externalPath: '{{ (eq .Values.global.controller.routing "path") | ternary (printf "%s%s" (tpl .Values.global.controller.path .) .Values.global.controller.shellGui.config.path) (tpl .Values.global.controller.path .) }}'
+      externalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.shellGui.externalProtocol .)  (tpl .Values.global.controller.shellGui.externalHost .)  (tpl .Values.global.controller.shellGui.externalPort .)  (tpl .Values.global.controller.shellGui.externalPath .)}}'
+
     lomos:
       # the apiKey to access Lomos
       # @section -- Lomos
       userApiKey: "api-key"
+    securityCoordination:
+      # -- IAM client id for the Security Coordination service
+      # @section -- Shell
+      iamClientId: "replace"
+      # -- IAM client secret for the Security Coordination service
+      # @section -- Shell
+      iamClientSecret: "replace"
+    wazuh:
+      host: wazuh.test
+      port: "80"
+      username: user
+      password: pass
+    intelligenceCoordinator:
+      internalProtocol: "http"
+      internalHost: "intelligence-coordination"
+      internalPort: "3000"
+      internalPath: "/"
+      internalUrl: '{{ printf "%s://%s:%s%s" (tpl .Values.global.controller.intelligenceCoordinator.internalProtocol .)  (tpl .Values.global.controller.intelligenceCoordinator.internalHost .)  (tpl .Values.global.controller.intelligenceCoordinator.internalPort .)  (tpl .Values.global.controller.intelligenceCoordinator.internalPath .)}}'
 
 dynamic-policy-manager:
   enabled: true
-  extraEnv:
-    PLM_PROMETHEUS_ORIG_API_URL: "{{ tpl .Values.global.icos.telemetry.rulerUrl . }}"
-    PLM_ICOS_JOB_MANAGER_BASE_URL: "{{ tpl .Values.global.icos.jobManager.baseUrl . }}"
-    PLM_AUTHN_SERVER: "{{ tpl .Values.global.icos.iam.baseUrl . }}"
-    PLM_AUTHN_REALM: "{{ tpl .Values.global.icos.iam.realm . }}"
-    PLM_AUTHN_CLIENT_ID: "{{ tpl .Values.global.icos.dpm.iamClientId . }}"
-    PLM_AUTHN_CLIENT_SECRET: "{{ tpl .Values.global.icos.dpm.iamClientSecret . }}"
+  backend:
+    extraEnv:
+      PLM_PROMETHEUS_RULES_API_URL: "{{ tpl .Values.global.controller.telemetry.rulerUrl . }}"
+      PLM_ICOS_JOB_MANAGER_BASE_URL: "{{ tpl .Values.global.controller.jobManager.internalUrl . }}"
+      PLM_AUTHN_SERVER: "{{ tpl .Values.global.core.iam.externalUrl . }}"
+      PLM_AUTHN_REALM: "{{ tpl .Values.global.core.iam.realm . }}"
+      PLM_AUTHN_CLIENT_ID: "{{ tpl .Values.global.controller.dpm.iamClientId . }}"
+      PLM_AUTHN_CLIENT_SECRET: "{{ tpl .Values.global.controller.dpm.iamClientSecret . }}"
+  gui:
+    extraEnv:
+      REACT_APP_KEYCLOAK_URL: "{{ tpl .Values.global.core.iam.externalUrl . }}"
+      REACT_APP_KEYCLOAK_REALM: "{{ tpl .Values.global.core.iam.realm . }}"
+      REACT_APP_KEYCLOAK_CLIENT_ID: "{{ tpl .Values.global.controller.dpm.iamGuiClientId . }}"
+      REACT_APP_KEYCLOAK_CLIENT_SECRET: ""
+  extraCertsBundle:
+    configmapName: "{{ tpl .Values.global.extraCertsBundle.configmapName . }}"
+    configmapKey: "{{ tpl .Values.global.extraCertsBundle.configmapKey . }}"
 
 #
 # Shell Backend
 #
 shell-backend:
+  enabled: true
+  gui:
+    config:
+      controllerUrl: '{{ printf "%s://%s:%s" (tpl .Values.global.controller.shellBackend.externalProtocol .)  (tpl .Values.global.controller.shellBackend.externalHost .)  (tpl .Values.global.controller.shellBackend.externalPort .)}}'
+      lighthouseUrl: "{{ tpl .Values.global.core.lighthouse.externalUrl . }}"
   components:
     lighthouse:
-      address: "{{ tpl .Values.global.icos.lighthouse.apiUrl . }}"
+      address: "{{ tpl .Values.global.core.lighthouse.apiUrl . }}"
       controller:
-        advertise-address: "{{ tpl .Values.global.icos.shellBackend.externalBaseUrl . }}"
-        advertise-name: "{{ tpl .Values.global.icos.controllerId . }}"
+        #advertise-address: "{{ tpl .Values.global.controller.url . }}"
+        #advertise-address: "{{ tpl .Values.global.controller.shellBackend.externalUrl . | trimPrefix \"http://\" | trimPrefix \"https://\" | trimSuffix \"/\" }}"
+        # FIXME: it should be externalUrl not externalHost, but Shell Client cannot handle 
+        #        urls with protocol prefix, port numbers and/or paths. So we use only the host. 
+        #        However, this will not work with controllers exposed on non default ports
+        #        or under a path prefix
+        advertise-address: "{{ tpl .Values.global.controller.shellBackend.externalHost . }}"
+        
+        advertise-name: "{{ tpl .Values.global.controller.id . }}"
     keycloak: 
-      server: "{{ tpl .Values.global.icos.iam.baseUrl . }}"
-      realm: "{{ tpl .Values.global.icos.iam.realm . }}"
-      client_id: "{{ tpl .Values.global.icos.shellBackend.iamClientId . }}"
-      client_secret: "{{ tpl .Values.global.icos.shellBackend.iamClientSecret . }}"
-      client_user: "{{ tpl .Values.global.icos.shellBackend.iamUser . }}"
-      client_password: "{{ tpl .Values.global.icos.shellBackend.iamPassword . }}"
+      server: "{{ tpl .Values.global.core.iam.externalUrl . }}"
+      realm: "{{ tpl .Values.global.core.iam.realm . }}"
+      client_id: "{{ tpl .Values.global.controller.shellBackend.iamClientId . }}"
+      client_secret: "{{ tpl .Values.global.controller.shellBackend.iamClientSecret . }}"
+      client_user: "{{ tpl .Values.global.controller.shellBackend.iamUser . }}"
+      client_password: "{{ tpl .Values.global.controller.shellBackend.iamPassword . }}"
     job_manager:
-      server: "{{ tpl .Values.global.icos.jobManager.baseUrl . }}"
+      server: "{{ tpl .Values.global.controller.jobManager.internalUrlNoPath . }}"
     aggregator:
-      server: "{{ tpl .Values.global.icos.aggregator.baseUrl . }}"
+      server: "{{ tpl .Values.global.controller.aggregator.internalUrlNoPath . }}"
       path: /
-
+    intelligence:
+      server: "http://{{ .Release.Name }}-icos-metrics-export:9600"
+  extraCertsBundle:
+    configmapName: "{{ tpl .Values.global.extraCertsBundle.configmapName . }}"
+    configmapKey: "{{ tpl .Values.global.extraCertsBundle.configmapKey . }}"
 #
 # Aggregator
 #
 aggregator:
+  enabled: true
   aggregator:
-    prometheus: "{{ tpl .Values.global.icos.telemetry.queryUrl . }}"
-    keycloakPublicKey: "{{ .Values.global.icos.iam.publicKey }}"
+    prometheus: "{{ tpl .Values.global.controller.telemetry.queryUrl . }}"
+    keycloakPublicKey: "{{ .Values.global.core.iam.publicKey }}"
 
 #
 # Job Manager
 #
 job-manager:
+  enabled: true
   nameOverride: false
   fullnameOverride: false
   configMap:
     dbDriver: mysql
     dbName: jobmanager
-    dbPassword: "{{ tpl .Values.global.icos.jobManager.dbPassword . }}"
-    dbHost: "{{ .Release.Name }}-job-manager-backend"
-    lighthouseBaseUrl: "{{ tpl .Values.global.icos.lighthouse.baseUrl . }}"
-    matchmakingUrl: "{{ tpl .Values.global.icos.matchmaker.baseUrl . }}"
-    keycloakPublicKey: "{{ tpl .Values.global.icos.iam.publicKey . }}"
-    policyManagerUrl: "{{ tpl .Values.global.icos.dpm.baseUrl . }}"
-
-job-manager-backend:
-  enabled: true
-  auth:
-    database: jobmanager
-    existingSecret: "{{ .Release.Name }}-job-manager-backend-credentials"
-
+    #dbPassword: "{{ tpl .Values.global.icos.jobManager.dbPassword . }}"
+    #dbHost: "{{ .Release.Name }}-job-manager-backend"
+    lighthouseBaseUrl: "{{ tpl .Values.global.core.lighthouse.externalUrl . }}"
+    matchmakingUrl: "{{ tpl .Values.global.controller.matchmaker.internalUrl . }}"
+    keycloakPublicKey: "{{ tpl .Values.global.core.iam.publicKey . }}"
+    policyManagerUrl: "{{ tpl .Values.global.controller.dpm.internalUrl . }}/registry/api/v1/icos/app"
+    keycloakBaseUrl: "{{ tpl .Values.global.core.iam.externalUrl . }}"
+    keycloakRealm: "{{ tpl .Values.global.core.iam.realm . }}"
+    keycloakClientId: "{{ tpl .Values.global.controller.jobManager.iamClientId . }}"
+    keycloakClientSecret: "{{ tpl .Values.global.controller.jobManager.iamClientSecret . }}"
+  extraCertsBundle:
+    configmapName: "{{ tpl .Values.global.extraCertsBundle.configmapName . }}"
+    configmapKey: "{{ tpl .Values.global.extraCertsBundle.configmapKey . }}"
 #
 # Telemetry
 #
 telemetruum-hub:
   enabled: true
   otel-collector:
-    controllerId: "{{ tpl .Values.global.icos.controllerId . }}"
+    controllerId: "{{ tpl .Values.global.controller.id . }}"
   alertmanager:
-    webhookUrl: "{{ tpl .Values.global.icos.dpm.baseUrl . }}/polman/watcher/api/v1/webhooks/alertmanager"
+    webhookUrl: "{{ tpl .Values.global.controller.dpm.internalUrl . }}/watcher/api/v1/webhooks/alertmanager"
   grafana:
     icos:
+      externalUrl: "{{ tpl .Values.global.controller.telemetry.grafanaExternalUrl . }}"
       iam:
-        url: "{{ tpl .Values.global.icos.iam.baseUrl . }}"
-        realm: "{{ tpl .Values.global.icos.iam.realm . }}"
-        tokenUrl: "{{ tpl .Values.global.icos.iam.tokenUrl . }}"
-        authUrl: "{{ tpl .Values.global.icos.iam.authUrl . }}"
-        userInfoUrl: "{{ tpl .Values.global.icos.iam.userInfoUrl . }}"
-        clientId: "{{ tpl .Values.global.icos.telemetry.iamGrafanaClientId . }}"
-        clientSecret: "{{ tpl .Values.global.icos.telemetry.iamGrafanaClientSecret . }}"
+        url: "{{ tpl .Values.global.core.iam.externalUrl . }}"
+        realm: "{{ tpl .Values.global.core.iam.realm . }}"
+        tokenUrl: "{{ tpl .Values.global.core.iam.tokenUrl . }}"
+        authUrl: "{{ tpl .Values.global.core.iam.authUrl . }}"
+        userInfoUrl: "{{ tpl .Values.global.core.iam.userInfoUrl . }}"
+        clientId: "{{ tpl .Values.global.controller.telemetry.iamGrafanaClientId . }}"
+        clientSecret: "{{ tpl .Values.global.controller.telemetry.iamGrafanaClientSecret . }}"
 
 telemetruum-gateway:
   enabled: true
-  telemetruumHubEndpoint: "{{ .Release.Name }}-telemetruum-hub-otel-collector:4317"
+  telemetruumGRPCHubEndpoint: "{{ .Release.Name }}-telemetruum-hub-otel-collector:4317"
   agentId: "self"
 
 telemetruum-leaf:
   enabled: true
-  telemetryGatewayEndpoint:  "{{ .Release.Name }}-telemetruum-gateway-otel-collector:4317"
+  telemetruumGRPCGatewayEndpoint:  "{{ .Release.Name }}-telemetruum-gateway-otel-collector:4317"
   enableKubeletstatsReceiver: false
   otel-node-agent:
     enabled: false
@@ -195,38 +408,102 @@ telemetruum-leaf:
 # Security Coordinator
 #
 security-coordination-module:
-  enabled: true
+  enabled: false
+  keycloak:
+    url: "{{ tpl .Values.global.core.iam.externalUrl . }}"
+    realm_name: "{{ tpl .Values.global.core.iam.realm . }}"
+    resource_server_id: default
+    audience: audience
+    client_id: "{{ tpl .Values.global.controller.securityCoordination.iamClientId . }}"
+    client_secret_key: "{{ tpl .Values.global.controller.securityCoordination.iamClientSecret . }}"
+  wazuh:
+    host: "{{ tpl .Values.global.controller.wazuh.host . }}"
+    port: "{{ tpl .Values.global.controller.wazuh.port . }}"
+    username: "{{ tpl .Values.global.controller.wazuh.username . }}"
+    password: "{{ tpl .Values.global.controller.wazuh.password . }}"
+  extraCertsBundle:
+    configmapName: "{{ tpl .Values.global.extraCertsBundle.configmapName . }}"
+    configmapKey: "{{ tpl .Values.global.extraCertsBundle.configmapKey . }}"
 
 security-lomos-api2:
-  enabled: true
+  enabled: false
   env:
   - name: "FLASK_LOMOS_OPENSEARCH_API_URL"
     value: "http://{{ .Release.Name }}-opensearch:9200"
   - name: "FLASK_LOMOS_INDEX_NAME"
-    value: "ss4o_logs-{{ .Values.global.controllerId }}-namespace"
+    value: "ss4o_logs-{{ .Values.global.controller.id }}-namespace"
   - name: "FLASK_LOMOS_OPENSEARCH_API_USERNAME"
     value: ""
   - name: "FLASK_LOMOS_OPENSEARCH_API_PASSWORD"
     value: ""
   - name: "FLASK_LOMOS_API_USER_API_KEY"
-    value: "{{ tpl .Values.global.icos.lomos.userApiKey . }}"
+    value: "{{ tpl .Values.global.controller.lomos.userApiKey . }}"
 
 #
 # Intelligence Coordinator
 #
 intelligence-coordination:
-  enabled: true
+  enabled: false
 
 matchmaker:
   enabled: true
   matchmaker:
-    urlIntrospect: "{{ tpl .Values.global.icos.iam.introspectUrl . }}"
-    urlToken: "{{ tpl .Values.global.icos.iam.tokenUrl . }}"
-    urlAggregator: "{{ tpl .Values.global.icos.aggregator.baseUrl . }}"
-    clientID: "{{ tpl .Values.global.icos.matchmaker.iamClientId . }}"
-    clientSecret: "{{ tpl .Values.global.icos.matchmaker.iamClientSecret . }}"
+    urlIntrospect: "{{ tpl .Values.global.core.iam.introspectUrl . }}"
+    urlToken: "{{ tpl .Values.global.core.iam.tokenUrl . }}"
+    urlAggregator: "{{ tpl .Values.global.controller.aggregator.internalUrl . }}"
+    clientID: "{{ tpl .Values.global.controller.matchmaker.iamClientId . }}"
+    clientSecret: "{{ tpl .Values.global.controller.matchmaker.iamClientSecret . }}"
+  extraCertsBundle:
+    configmapName: "{{ tpl .Values.global.extraCertsBundle.configmapName . }}"
+    configmapKey: "{{ tpl .Values.global.extraCertsBundle.configmapKey . }}"
+
 #
 # Data Management Services
 #
 dataclay:
   enabled: false
+
+#
+# Topology Exporter
+#
+topology-exporter:
+  enabled: false
+
+icos-metrics-export:
+  enabled: true
+  INTELLIGENCE_API_BASE_URL: "{{ tpl .Values.global.controller.intelligenceCoordinator.internalUrl . }}"
+  GRAFANA_API_BASE_URL: "{{ tpl .Values.global.controller.telemetry.grafanaInternalUrl . }}"
+  AGGREGATOR_URL: "{{ tpl .Values.global.controller.aggregator.internalUrl . }}"
+  GRAFANA_DATASOURCE_UID: "a151c53f-db08-4d10-a3b8-97ef5f2d614f"
+  DATACLAY_HOST: "{{ tpl (default \"\" (and .Values.global.controller.dataclay .Values.global.controller.dataclay.host)) . }}"
+  DATACLAY_USERNAME: "{{ tpl (default \"\" (and .Values.global.controller.dataclay .Values.global.controller.dataclay.username)) . }}"
+  DATACLAY_PASSWORD: "{{ tpl (default \"\" (and .Values.global.controller.dataclay .Values.global.controller.dataclay.password)) . }}"
+  KEYCLOAK_SERVER_URL: "{{ tpl .Values.global.core.iam.externalUrl . }}"
+  KEYCLOAK_REALM_NAME: "{{ tpl .Values.global.core.iam.realm . }}"
+  KEYCLOAK_CLIENT_ID: "{{ tpl .Values.global.controller.metricsExporter.iamClientId . }}"
+  KEYCLOAK_CLIENT_SECRET_KEY: "{{ tpl .Values.global.controller.metricsExporter.iamClientSecret . }}"
+  grafana:
+    secretName: "{{ .Release.Name }}-grafana-admin"
+  extraCertsBundle:
+    configmapName: "{{ tpl .Values.global.extraCertsBundle.configmapName . }}"
+    configmapKey: "{{ tpl .Values.global.extraCertsBundle.configmapKey . }}"
+
+
+icos-ingress-controller:
+  # keep disabled by default during the migration phase
+  enabled: false
+  cert-manager:
+    enabled: true
+  step-issuer:
+    enabled: true
+    icos-issuer:
+      bundle: "{{ .Values.global.core.ca.bundle }}"
+      kid: "{{ .Values.global.core.ca.issuerKid }}"
+      user: "{{ .Values.global.core.ca.issuerUser }}"
+      password: "{{ .Values.global.core.ca.issuerPassword }}"
+  nginx-ingress-controller:
+    extraEnvVars:
+      - name: HELM_RELEASE_NAME
+        value: "{{ .Release.Name }}"
+    extraArgs:
+      default-ssl-certificate: "$(POD_NAMESPACE)/$(HELM_RELEASE_NAME)-ingress-tls"

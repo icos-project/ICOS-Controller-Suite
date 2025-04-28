@@ -43,12 +43,35 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
+Common labels
+*/}}
+{{- define "shell-backend-gui.labels" -}}
+helm.sh/chart: {{ include "shell-backend.chart" . }}
+{{ include "shell-backend-gui.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
 Selector labels
 */}}
 {{- define "shell-backend.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "shell-backend.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: backend
 {{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "shell-backend-gui.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "shell-backend.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: gui
+{{- end }}
+
 
 {{/*
 Create the name of the service account to use

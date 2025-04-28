@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "coordination-module.fullname" . }}
+  labels:
+    {{- include "coordination-module.labels" . | nindent 4 }}
+data:
+    WAZUH_HOST: {{ tpl .Values.wazuh.host . }}
+    WAZUH_PORT: "{{ tpl .Values.wazuh.port . }}"
+    WAZUH_USERNAME: {{ tpl .Values.wazuh.username . }}
+    WAZUH_PASSWORD: {{ tpl .Values.wazuh.password . }}
+    KEYCLOAK_SERVER_URL: {{ tpl .Values.keycloak.url . }}
+    KEYCLOAK_REALM_NAME: {{ tpl .Values.keycloak.realm_name . }}
+    KEYCLOAK_RESOURCE_SERVER_ID: {{ tpl .Values.keycloak.resource_server_id . }}
+    KEYCLOAK_AUDIENCE: {{ tpl .Values.keycloak.audience . }}
+    KEYCLOAK_CLIENT_ID: {{ tpl .Values.keycloak.client_id . }}
+    KEYCLOAK_CLIENT_SECRET_KEY: {{ tpl .Values.keycloak.client_secret_key . }}
+    PROMETHEUS_METRICS_DISABLED: {{ .Values.prometheus_metrics_disabled | quote }}
+    SECURITY_DISABLED: {{ .Values.security_disabled | quote }}
